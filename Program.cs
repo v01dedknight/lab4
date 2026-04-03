@@ -1,53 +1,25 @@
 ﻿using System;
 using System.IO;
-using System.Xml.Serialization;
-using System.Runtime.Serialization.Formatters.Binary;
+using FileManager.Models;
+using FileManager.Services;
+using FileManager.Core;
 
-namespace FileManager.Models {
-  [Serializable]
-  public class TextFileData {
-    public string Title { get; set; }
-    public string Content { get; set; }
-    public DateTime LastModified { get; set; }
+TextFileData currentFile = new TextFileData("NewDocument", "");
+EditorHistory history = new EditorHistory();
 
-    public TextFileData() { }
+// Логика добавления
+void AddText(string newText) {
+  // Сначала сохраняется старое состояние, затем вносятся изменения
+  history.Push(new TextMemento(currentFile.Content));
+  currentFile.Content += newText;
+}
 
-    public TextFileData(string title, string content) {
-      Title = title;
-      Content = content;
-      LastModified = DateTime.Now;
-    }
+// Отмена изменений
+void Undo() {
+  var previous = history.Pop();
 
-    // XML Сериализация
-    public void SaveToXml(string filePath) {
-      XmlSerializer serializer = new XmlSerializer(typeof(TextFileData));
-      using (StreamWriter writer = new StreamWriter(filePath)) {
-        serializer.Serialize(writer, this);
-      }
-    }
-
-    public static TextFileData LoadFromXml(string filePath) {
-      XmlSerializer serializer = new XmlSerializer(typeof(TextFileData));
-      using (StreamReader reader = new StreamReader(filePath)) {
-        return (TextFileData)serializer.Deserialize(reader);
-      }
-    }
-
-    // Бинарная сериализация
-    public void SaveToBinary(string filePath) {
-#pragma warning disable SYSLIB0011
-      BinaryFormatter formatter = new BinaryFormatter();
-      using (FileStream fs = new FileStream(filePath, FileMode.Create)) {
-        formatter.Serialize(fs, this);
-      }
-    }
-
-    public static TextFileData LoadFromBinary(string filePath) {
-#pragma warning disable SYSLIB0011
-      BinaryFormatter formatter = new BinaryFormatter();
-      using (FileStream fs = new FileStream(filePath, FileMode.Open)) {
-        return (TextFileData)formatter.Deserialize(fs);
-      }
-    }
+  // Если есть сохраненное состояние, оно восстанавливается
+  if (previous != null) {
+    currentFile.Content = previous.Content;
   }
 }

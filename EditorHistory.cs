@@ -13,7 +13,12 @@ namespace FileManager.Core {
 
     // Получение последнего сохраненного состояния
     public TextMemento Pop() {
-      return _history.Count > 0 ? _history.Pop() : null;
+      if (_history.Count > 0) {
+        return _history.Pop();
+      }
+      else {
+        return null;
+      }
     }
 
     // Проверка, есть ли сохраненные состояния
